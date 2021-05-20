@@ -1,0 +1,8 @@
+input/
+output/
+env/
+.vscode/
+Lib/
+Scripts/
+__pycache__/
+*.py[cod]
