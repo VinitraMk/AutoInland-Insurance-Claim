@@ -24,6 +24,9 @@ class Preprocessor:
     def fill_missing_values(self):
         self.clean_gender_col(self.preproc_args['missing']['gender'])
         self.clean_age_col(int(self.preproc_args['missing']['age']))
+        self.clean_color_col(self.preproc_args['missing']['color'])
+        self.clean_carmake_col()
+        self.clean_carcat_col()
         self.plot_graph()
 
 
@@ -47,10 +50,29 @@ class Preprocessor:
     def clean_age_col(self, replace_value):
         print('\nCleaning up Age Column')
         self.data['Age'] = self.data['Age'].apply(pd.to_numeric)
-        self.X['Age'] = self.X['Age'].apply(pd.to_numeric)
         self.data['Age'] = self.data['Age'].mask(self.data['Age'] < 0, replace_value)
-        self.X['Age'] = self.X['Age'].mask(self.X['Age'] < 0, replace_value)
+        self.data['Age'] = self.data['Age'].mask(self.data['Age'] > 120, 120)
         print('No of invalid ages: ',self.data[self.data['Age'] < 0]['Age'].shape)
+        self.X = self.data.drop(columns=['target','ID'])
+
+    def clean_color_col(self, color_mappings):
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('AsAttached',-1)
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].fillna(-1)
+
+        for color in color_mappings:
+            self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
+
+        self.X = self.data.drop(columns = ['target','ID'])
+
+    def clean_carmake_col(self):
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('.',np.nan)
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].fillna(-1)
+        self.X = self.data.drop(columns = ['target','ID'])
+
+    def clean_carcat_col(self):
+        self.data['Car_Category'] = self.data['Car_Category'].fillna(-1)
+        self.X = self.data.drop(columns = ['target','ID'])
 
     def plot_graph(self):
         for col in self.data.columns:
