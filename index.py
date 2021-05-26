@@ -8,7 +8,7 @@ from modules.preprocessing import Preprocessor
 def main(args):
 
     preprocessor = Preprocessor()
-    preprocessor.fill_missing_values()
+    preprocessor.start_preprocessing()
 
 def read_args():
     experiment = Experiment(get_config_path())
