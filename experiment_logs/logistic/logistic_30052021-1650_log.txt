@@ -1,0 +1,9 @@
+{
+    "model_args": {
+        "model": "logistic",
+        "solver": "lbfgs",
+        "class_weight": "balanced",
+        "C": 15.0,
+        "tolerance": 0.0001
+    }
+}

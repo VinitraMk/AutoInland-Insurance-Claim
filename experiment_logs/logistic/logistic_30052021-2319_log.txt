@@ -1,0 +1,23 @@
+{
+    "model_args": {
+        "model": "logistic",
+        "solver": "saga",
+        "class_weight": "balanced",
+        "C": 0.0001,
+        "tolerance": 0.0001,
+        "penalty": "l2"
+    },
+    "model_output": {
+        "validation_score": 0.6283112582781457,
+        "confusion_matrix": [
+            [
+                1333,
+                808
+            ],
+            [
+                90,
+                185
+            ]
+        ]
+    }
+}

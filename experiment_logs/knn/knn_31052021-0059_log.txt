@@ -1,0 +1,24 @@
+{
+    "model_args": {
+        "model": "knn",
+        "k": 20,
+        "weights": "distance",
+        "algorithm": "kd_tree",
+        "leaf_size": 30,
+        "p": 2,
+        "metric": "minkowski"
+    },
+    "model_output": {
+        "validation_score": 0.8621688741721855,
+        "confusion_matrix": [
+            [
+                2049,
+                92
+            ],
+            [
+                241,
+                34
+            ]
+        ]
+    }
+}

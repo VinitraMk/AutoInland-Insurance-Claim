@@ -1,0 +1,1 @@
+{"model": "logistic", "solver": "lbfgs", "class_weight": "balanced", "C": 3.5, "tolerance": 0.0001}

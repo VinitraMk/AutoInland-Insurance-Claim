@@ -1,0 +1,24 @@
+{
+    "model_args": {
+        "model": "knn",
+        "k": 5,
+        "weights": "uniform",
+        "algorithm": "ball_tree",
+        "leaf_size": 30,
+        "p": 2,
+        "metric": "minkowski"
+    },
+    "model_output": {
+        "validation_score": 0.8683774834437086,
+        "confusion_matrix": [
+            [
+                2057,
+                84
+            ],
+            [
+                234,
+                41
+            ]
+        ]
+    }
+}

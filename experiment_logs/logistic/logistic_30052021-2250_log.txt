@@ -1,0 +1,23 @@
+{
+    "model_args": {
+        "model": "logistic",
+        "solver": "lbfgs",
+        "class_weight": "balanced",
+        "C": 0.1,
+        "tolerance": 0.0001,
+        "penalty": "l2"
+    },
+    "model_output": {
+        "validation_score": 0.6233443708609272,
+        "confusion_matrix": [
+            [
+                1313,
+                828
+            ],
+            [
+                82,
+                193
+            ]
+        ]
+    }
+}

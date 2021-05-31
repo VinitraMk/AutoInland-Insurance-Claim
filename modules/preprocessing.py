@@ -31,15 +31,19 @@ class Preprocessor:
         self.test = self.test.drop(columns=self.preproc_args['skip'])
 
     def start_preprocessing(self):
+        print('\nCleaning up columns...')
         self.clean_gender_col(self.preproc_args['missing']['gender'])
         self.clean_age_col(int(self.preproc_args['missing']['age']))
         self.clean_color_col(self.preproc_args['missing']['color'])
         self.clean_carmake_col()
         self.clean_carcat_col()
+        print('\nPlotting distribution...')
         self.plot_graph()
         self.drop_skip_columns()
+        print('\nSplitting datasets to train, validation and test sets')
         self.do_data_split()
-        self.encode_labels()
+        print('\nApplying label encoder...')
+        return self.encode_labels()
 
     def do_data_split(self):
         valid_len = math.ceil(0.2 * self.data.shape[0])
@@ -65,6 +69,8 @@ class Preprocessor:
                 self.test[col] = le.transform(self.test[col])
                 print(f'Encoded {col}', le.classes_)
 
+        return self.X, self.y, self.valid_X, self.valid_y, self.test, self.test_ids
+
 
     def replace_cols(self, col, to_replace, value):
         for val in to_replace:
@@ -73,18 +79,13 @@ class Preprocessor:
             self.test[col] = rp
 
     def clean_gender_col(self, replace_value):
-        print('\nCleaning up Gender column')
-        print('No of null:',self.data['Gender'].isnull().sum())
         self.replace_cols('Gender',['Entity','NO GENDER','NOT STATED','SEX','Joint Gender'], 'Other')
-        print('No of null:',self.data['Gender'].isnull().sum())
         rpcol = self.data['Gender'].replace(to_replace=np.nan,
         value=replace_value)
         self.data['Gender'] = rpcol
         self.test['Gender'] = rpcol
-        print('No of null:',self.data['Gender'].isnull().sum())
 
     def clean_age_col(self, replace_value):
-        print('\nCleaning up Age Column')
         self.data['Age'] = self.data['Age'].apply(pd.to_numeric)
         self.test['Age'] = self.test['Age'].apply(pd.to_numeric)
         self.data['Age'] = self.data['Age'].mask(self.data['Age'] < 0, replace_value)
