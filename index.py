@@ -6,6 +6,7 @@ from modules.experiment import Experiment
 from modules.preprocessing import Preprocessor
 from models.logistic import Logistic
 from models.knn import KNN
+from models.svm import SVM
 
 def main(args):
 
@@ -19,6 +20,9 @@ def main(args):
     elif args['model'] == 'knn':
         knn = KNN(X,y)
         model = knn.train_model()
+    elif args['model'] == 'svm':
+        svm = SVM(X,y)
+        model = svm.train_model()
 
     experiment = Experiment(get_config_path(), model)
     experiment.validate(valid_X, valid_y)
