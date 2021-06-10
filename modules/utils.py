@@ -30,5 +30,5 @@ def get_preproc_params():
 
 def get_validation_params():
     all_args = get_all_args()
-    return all_args['validate']
+    return all_args['validation']
 

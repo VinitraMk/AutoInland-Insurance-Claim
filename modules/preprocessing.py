@@ -1,5 +1,6 @@
 from modules.experiment import Experiment
 from modules.utils import get_config, get_preproc_params
+from modules.validation import Validate
 
 import pandas as pd
 import numpy as np
@@ -40,37 +41,32 @@ class Preprocessor:
         print('\nPlotting distribution...')
         self.plot_graph()
         self.drop_skip_columns()
+        '''
         print('\nSplitting datasets to train, validation and test sets')
         self.do_data_split()
+        '''
         print('\nApplying label encoder...')
         return self.encode_labels()
 
     def do_data_split(self):
-        valid_len = math.ceil(0.2 * self.data.shape[0])
-        train_len = self.data.shape[0] - valid_len
-        self.X = self.data[0:train_len]
-        self.y = self.X['target']
-        self.X = self.X.drop(columns=['target'])
-        self.valid_X = self.data[train_len:]
-        self.valid_y = self.valid_X['target']
-        self.valid_X = self.valid_X.drop(columns=['target'])
+        validate = Validate(self.data)
+        self.X, self.y, sel.valid_X, self.valid_y = validate.prepare_dataset()
         print('Lengths of test, train, valid',self.test.shape, self.X.shape, self.valid_X.shape)
 
     def encode_labels(self):
-        for col in self.X.columns:
-            if col != 'Age' and col != 'No_Pol':
+        for col in self.data.columns:
+            if col != 'Age' and col != 'No_Pol' and col != 'target':
                 le = LabelEncoder()
                 self.data[col] = le.fit_transform(self.data[col])
-                self.X[col] = le.transform(self.X[col])
-                self.valid_X[col] = le.transform(self.valid_X[col])
+                #self.X[col] = le.transform(self.X[col])
+                #self.valid_X[col] = le.transform(self.valid_X[col])
                 self.test[col] = self.test[col].map(lambda s: 'unknown' if s not in le.classes_ else s)
                 if self.test[self.test[col] == 'unknown'].shape[0] != 0:
                     le.classes_ = np.append(le.classes_,'unknown')
                 self.test[col] = le.transform(self.test[col])
                 print(f'Encoded {col}', le.classes_)
 
-        return self.X, self.y, self.valid_X, self.valid_y, self.test, self.test_ids
-
+        return self.data, self.test, self.test_ids
 
     def replace_cols(self, col, to_replace, value):
         for val in to_replace:
