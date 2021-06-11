@@ -35,16 +35,12 @@ class Preprocessor:
         print('\nCleaning up columns...')
         self.clean_gender_col(self.preproc_args['missing']['gender'])
         self.clean_age_col(int(self.preproc_args['missing']['age']))
-        self.clean_color_col(self.preproc_args['missing']['color'])
-        self.clean_carmake_col()
-        self.clean_carcat_col()
+        self.clean_color_col(self.preproc_args['missing']['color'], self.preproc_args['missing']['color_rp'])
+        self.clean_carmake_col(self.preproc_args['missing']['make'])
+        self.clean_carcat_col(self.preproc_args['missing']['category'])
         print('\nPlotting distribution...')
         self.plot_graph()
         self.drop_skip_columns()
-        '''
-        print('\nSplitting datasets to train, validation and test sets')
-        self.do_data_split()
-        '''
         print('\nApplying label encoder...')
         return self.encode_labels()
 
@@ -92,29 +88,28 @@ class Preprocessor:
         self.test['Age'] = self.test['Age'].astype(str)
 
 
-    def clean_color_col(self, color_mappings):
+    def clean_color_col(self, color_mappings, color_rp):
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].str.replace(" ","")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('AsAttached',"0")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('AsAttached',"0")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].fillna("0")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].fillna("0")
-        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('0','Black')
-        #self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0','Black')
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('0',color_rp)
+        #self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0',color_rp)
 
         for color in color_mappings:
             self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
             self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace(color, color_mappings[color])
              
-    def clean_carmake_col(self):
+    def clean_carmake_col(self, replace_value):
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('.',np.nan)
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].replace('.',np.nan)
-        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].fillna("0")
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].fillna(replace_value)
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].fillna("0")
-        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('0','TOYOTA')
 
-    def clean_carcat_col(self):
-        self.data['Car_Category'] = self.data['Car_Category'].fillna("Saloon")
+    def clean_carcat_col(self, replace_value):
+        self.data['Car_Category'] = self.data['Car_Category'].fillna(replace_value)
         self.test['Car_Category'] = self.test['Car_Category'].fillna("0")
 
     def plot_graph(self):

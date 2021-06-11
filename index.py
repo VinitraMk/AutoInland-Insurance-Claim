@@ -10,35 +10,47 @@ from models.knn import KNN
 from models.svm import SVM
 from models.rfa import RandomForest
 
+def run_model(args, X, y):
+    model = None
+    if args['model'] == 'logistic':
+        logistic = Logistic(X,y, model)
+        model = logistic.train_model()
+    elif args['model'] == 'knn':
+        knn = KNN(X,y, model)
+        model = knn.train_model()
+    elif args['model'] == 'svm':
+        svm = SVM(X,y, model)
+        model = svm.train_model()
+    elif args['model'] == 'rfa':
+        rfa = RandomForest(X, y, model)
+        model = rfa.train_model()
+    else:
+        print('\nInvalid model name :-|\n')
+        exit()
+    return model
+
+
 def main(args, val_args):
 
     preprocessor = Preprocessor()
     data, test_features, test_ids = preprocessor.start_preprocessing()
     model = None
     avg_score = 0
+    validate = None
 
     for i in range(val_args['k']):
         validate = Validate(data)
         X, y, valid_X, valid_y = validate.prepare_dataset()
-        if args['model'] == 'logistic':
-            logistic = Logistic(X,y, model)
-            model = logistic.train_model()
-        elif args['model'] == 'knn':
-            knn = KNN(X,y, model)
-            model = knn.train_model()
-        elif args['model'] == 'svm':
-            svm = SVM(X,y, model)
-            model = svm.train_model()
-        elif args['model'] == 'rfa':
-            rfa = RandomForest(X, y, model)
-            model = rfa.train_model()
+        model = run_model(args, X, y)
         experiment = Experiment(get_config_path(), model)
         score = experiment.validate(valid_X, valid_y)
         avg_score = score + avg_score
     avg_score = avg_score / val_args['k']
     print('\nAverage F1 score of the model:',avg_score,'\n')
+    X, y = validate.prepare_full_dataset()
+    model = run_model(args, X, y)
+    experiment = Experiment(get_config_path(), model)
     experiment.predict_and_save_csv(test_features, test_ids, avg_score)
-
 
 def read_args():
     args = get_model_params()

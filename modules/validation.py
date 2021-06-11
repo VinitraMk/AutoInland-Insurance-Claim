@@ -25,4 +25,10 @@ class Validate:
         self.val_X = val_data.drop(columns=['target'], axis=1)
         return self.train_X, self.train_y, self.val_X, self.val_y
 
+    def prepare_full_dataset(self):
+        self.train_X = self.data
+        self.train_y = self.data['target']
+        self.train_X = self.train_X.drop(columns=['target'])
+        return self.train_X, self.train_y
+
 
