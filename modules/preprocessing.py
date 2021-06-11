@@ -99,7 +99,8 @@ class Preprocessor:
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('AsAttached',"0")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].fillna("0")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].fillna("0")
-
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('0','Black')
+        #self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0','Black')
 
         for color in color_mappings:
             self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
@@ -110,9 +111,10 @@ class Preprocessor:
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].replace('.',np.nan)
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].fillna("0")
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].fillna("0")
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('0','TOYOTA')
 
     def clean_carcat_col(self):
-        self.data['Car_Category'] = self.data['Car_Category'].fillna("0")
+        self.data['Car_Category'] = self.data['Car_Category'].fillna("Saloon")
         self.test['Car_Category'] = self.test['Car_Category'].fillna("0")
 
     def plot_graph(self):

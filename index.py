@@ -8,6 +8,7 @@ from modules.validation import Validate
 from models.logistic import Logistic
 from models.knn import KNN
 from models.svm import SVM
+from models.rfa import RandomForest
 
 def main(args, val_args):
 
@@ -28,6 +29,9 @@ def main(args, val_args):
         elif args['model'] == 'svm':
             svm = SVM(X,y, model)
             model = svm.train_model()
+        elif args['model'] == 'rfa':
+            rfa = RandomForest(X, y, model)
+            model = rfa.train_model()
         experiment = Experiment(get_config_path(), model)
         score = experiment.validate(valid_X, valid_y)
         avg_score = score + avg_score
