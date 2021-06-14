@@ -8,6 +8,7 @@ from os import path, getenv
 import matplotlib.pyplot as plt
 import math
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder
 
 class Preprocessor:
     X = None
@@ -18,6 +19,7 @@ class Preprocessor:
     valid_y = None
     config = None
     preproc_args = None
+    missing_val_maps = dict()
 
     def __init__(self):
         self.config = get_config()
@@ -33,16 +35,29 @@ class Preprocessor:
 
     def start_preprocessing(self):
         print('\nCleaning up columns...')
+        self.find_missing_val_replacements()
         self.clean_gender_col(self.preproc_args['missing']['gender'])
         self.clean_age_col(int(self.preproc_args['missing']['age']))
-        self.clean_color_col(self.preproc_args['missing']['color'], self.preproc_args['missing']['color_rp'])
+        #self.clean_color_col(self.preproc_args['missing']['color'], self.preproc_args['missing']['color_rp'])
         self.clean_carmake_col(self.preproc_args['missing']['make'])
         self.clean_carcat_col(self.preproc_args['missing']['category'])
+        self.clean_state_col(self.preproc_args['missing']['state'])
+        self.clean_LGA_col(self.preproc_args['missing']['lga'])
         print('\nPlotting distribution...')
         self.plot_graph()
         self.drop_skip_columns()
         print('\nApplying label encoder...')
         return self.encode_labels()
+
+    def find_missing_val_replacements(self):
+        for col in self.data.columns:
+            if col != 'ID':
+                mode = self.data[col].mode()
+                self.missing_val_maps[col] = mode
+        print(self.missing_val_maps)
+
+    def apply_oversampling(self):
+        pass
 
     def do_data_split(self):
         validate = Validate(self.data)
@@ -50,17 +65,12 @@ class Preprocessor:
         print('Lengths of test, train, valid',self.test.shape, self.X.shape, self.valid_X.shape)
 
     def encode_labels(self):
-        for col in self.data.columns:
-            if col != 'Age' and col != 'No_Pol' and col != 'target':
-                le = LabelEncoder()
-                self.data[col] = le.fit_transform(self.data[col])
-                #self.X[col] = le.transform(self.X[col])
-                #self.valid_X[col] = le.transform(self.valid_X[col])
-                self.test[col] = self.test[col].map(lambda s: 'unknown' if s not in le.classes_ else s)
-                if self.test[self.test[col] == 'unknown'].shape[0] != 0:
-                    le.classes_ = np.append(le.classes_,'unknown')
-                self.test[col] = le.transform(self.test[col])
-                print(f'Encoded {col}', le.classes_)
+        selected_cols = [x for x in self.data.columns if x != 'Age' and x != 'No_Pol' and x != 'target' and x not in self.preproc_args['skip']]
+        print(selected_cols)
+        le = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1, dtype=np.int64)
+        self.data[selected_cols] = le.fit_transform(self.data[selected_cols])
+        self.test[selected_cols] = le.transform(self.test[selected_cols])
+        print(f'Encoded classes', le.categories_)
 
         return self.data, self.test, self.test_ids
 
@@ -89,6 +99,10 @@ class Preprocessor:
 
 
     def clean_color_col(self, color_mappings, color_rp):
+        for color in color_mappings:
+            self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
+            self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace(color, color_mappings[color])
+
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].str.replace(" ","")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('AsAttached',"0")
@@ -96,21 +110,27 @@ class Preprocessor:
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].fillna("0")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].fillna("0")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('0',color_rp)
-        #self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0',color_rp)
+        self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0',color_rp)
 
-        for color in color_mappings:
-            self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
-            self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace(color, color_mappings[color])
+        
              
     def clean_carmake_col(self, replace_value):
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('.',np.nan)
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].replace('.',np.nan)
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].fillna(replace_value)
-        self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].fillna("0")
+        self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].fillna(replace_value)
 
     def clean_carcat_col(self, replace_value):
         self.data['Car_Category'] = self.data['Car_Category'].fillna(replace_value)
-        self.test['Car_Category'] = self.test['Car_Category'].fillna("0")
+        self.test['Car_Category'] = self.test['Car_Category'].fillna(replace_value)
+
+    def clean_state_col(self, replace_value):
+        self.data['State'] = self.data['State'].fillna(replace_value)
+        self.test['State'] = self.test['State'].fillna(replace_value)
+
+    def clean_LGA_col(self, replace_value):
+        self.data['LGA_Name'] = self.data['LGA_Name'].fillna(replace_value)
+        self.test['LGA_Name'] = self.test['LGA_Name'].fillna(replace_value)
 
     def plot_graph(self):
         for col in self.data.columns:
@@ -144,11 +164,15 @@ class Preprocessor:
                 plt.savefig(f'{plot_path}/{col}_distribution.png')
                 plt.clf()
             elif col == 'target':
+                plt.figure(figsize=(10,6), dpi=80)
                 tdata = self.data
+                full_len = self.data.shape[0]
                 unique_cols = tdata.groupby(col)['ID'].nunique()
+                print(unique_cols)
                 unique_cols.plot.bar(x=col,y="Count",title="Distribution of columns")
+                for i, val in enumerate(list(unique_cols)):
+                    plt.text(i, val/full_len, str(val/full_len))
                 plot_path = path.join(getenv("ROOT_DIR"),self.config['visualizations'])
-                plt.tight_layout()
                 plt.savefig(f'{plot_path}/{col}_distribution.png')
                 plt.clf()
             else:
