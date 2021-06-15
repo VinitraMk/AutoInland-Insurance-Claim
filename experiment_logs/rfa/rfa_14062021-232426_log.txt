@@ -1,0 +1,79 @@
+{
+    "model_args": {
+        "model": "rfa",
+        "class_weight": "balanced",
+        "n_estimators": 400,
+        "criterion": "gini",
+        "max_features": "log2",
+        "max_depth": 70
+    },
+    "model_output": {
+        "validation_score": 0.8624237772396324
+    },
+    "preproc_args": {
+        "skip": [
+            "ID",
+            "Policy Start Date",
+            "Policy End Date",
+            "First Transaction Date"
+        ],
+        "sampling_strategy": 1.0,
+        "sampling_k": 5,
+        "missing": {
+            "gender": "Male",
+            "age": 40,
+            "color_rp": "Black",
+            "category": "Saloon",
+            "make": "TOYOTA",
+            "state": "Lagos",
+            "lga": "Victoria Island",
+            "color": {
+                "Black": "Black",
+                "Grey": "Grey",
+                "Red": "Red",
+                "Blue": "Blue",
+                "Silver": "Grey",
+                "Green": "Green",
+                "Ash": "Grey",
+                "White": "White",
+                "Gray&Gray": "Gray & Gray",
+                "Wine": "Red",
+                "Brown": "Brown",
+                "Red&Blue": "Red",
+                "Gold": "Yellow",
+                "Gray&Silver": "Grey",
+                "Orange": "Yellow",
+                "Red&Black": "Red",
+                "DarkGrey": "Grey",
+                "White&Red": "White",
+                "LightGreen": "Green",
+                "DarkGray": "Grey",
+                "B.Silver": "Grey",
+                "Purple": "Blue",
+                "Blue&Red": "Blue",
+                "Red&Yellow": "Red",
+                "Yellow": "Yellow",
+                "Red&White": "Red",
+                "D.Red": "Red",
+                "DarkRed": "Red",
+                "Black&White": "Black",
+                "White&Blue": "White",
+                "Cream": "Yellow",
+                "DarkGreen": "Green",
+                "D.Gold": "Yellow",
+                "Champagne": "Yellow",
+                "LightBlue": "Blue",
+                "Blue&White&Red": "Blue",
+                "White&Yellow": "White",
+                "DarkBlue": "Blue",
+                "Black&Orange": "Black",
+                "Burgundy": "Red",
+                "Yellow&White": "Yellow",
+                "BeigeMitalic": "Yellow",
+                "LightGray": "Grey",
+                "BlueSky": "Blue",
+                "RedMaroon": "Red"
+            }
+        }
+    }
+}

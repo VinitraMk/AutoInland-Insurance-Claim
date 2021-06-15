@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import math
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OrdinalEncoder
+from imblearn.over_sampling import RandomOverSampler, SMOTE
 
 class Preprocessor:
     X = None
@@ -37,8 +38,8 @@ class Preprocessor:
         print('\nCleaning up columns...')
         self.find_missing_val_replacements()
         self.clean_gender_col(self.preproc_args['missing']['gender'])
-        self.clean_age_col(int(self.preproc_args['missing']['age']))
-        #self.clean_color_col(self.preproc_args['missing']['color'], self.preproc_args['missing']['color_rp'])
+        self.clean_age_col(int(self.preproc_args['missing']['age']), self.preproc_args['missing']['age_map'])
+        self.clean_color_col(self.preproc_args['missing']['color'], self.preproc_args['missing']['color_rp'])
         self.clean_carmake_col(self.preproc_args['missing']['make'])
         self.clean_carcat_col(self.preproc_args['missing']['category'])
         self.clean_state_col(self.preproc_args['missing']['state'])
@@ -47,7 +48,9 @@ class Preprocessor:
         self.plot_graph()
         self.drop_skip_columns()
         print('\nApplying label encoder...')
-        return self.encode_labels()
+        self.encode_labels()
+        return self.apply_oversampling()
+
 
     def find_missing_val_replacements(self):
         for col in self.data.columns:
@@ -57,7 +60,16 @@ class Preprocessor:
         print(self.missing_val_maps)
 
     def apply_oversampling(self):
-        pass
+        over_sampler = SMOTE(sampling_strategy=self.preproc_args['sampling_strategy'], random_state = 42,
+                k_neighbors = self.preproc_args['sampling_k'],
+                n_jobs=-1)
+        X = self.data
+        y = self.data['target']
+        X = X.drop(columns=['target'])
+        X, y = over_sampler.fit_resample(X, y)
+        self.data = X.join(y)
+        print('\nData shape after sampling', self.data.shape,'\n')
+        return self.data, self.test, self.test_ids
 
     def do_data_split(self):
         validate = Validate(self.data)
@@ -65,14 +77,15 @@ class Preprocessor:
         print('Lengths of test, train, valid',self.test.shape, self.X.shape, self.valid_X.shape)
 
     def encode_labels(self):
-        selected_cols = [x for x in self.data.columns if x != 'Age' and x != 'No_Pol' and x != 'target' and x not in self.preproc_args['skip']]
+        selected_cols = [x for x in self.data.columns if x != 'target' and x not in self.preproc_args['skip']]
+        print(self.data.columns)
         print(selected_cols)
+        print(self.data['Age_Cat'].head())
         le = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1, dtype=np.int64)
         self.data[selected_cols] = le.fit_transform(self.data[selected_cols])
         self.test[selected_cols] = le.transform(self.test[selected_cols])
+        print(self.data.columns)
         print(f'Encoded classes', le.categories_)
-
-        return self.data, self.test, self.test_ids
 
     def replace_cols(self, col, to_replace, value):
         for val in to_replace:
@@ -87,22 +100,24 @@ class Preprocessor:
         self.data['Gender'] = rpcol
         self.test['Gender'] = rpcol
 
-    def clean_age_col(self, replace_value):
-        self.data['Age'] = self.data['Age'].apply(pd.to_numeric)
-        self.test['Age'] = self.test['Age'].apply(pd.to_numeric)
-        self.data['Age'] = self.data['Age'].mask(self.data['Age'] < 0, replace_value)
-        self.test['Age'] = self.test['Age'].mask(self.test['Age'] < 0, replace_value)
-        self.data['Age'] = self.data['Age'].mask(self.data['Age'] > 120, "120")
-        self.test['Age'] = self.test['Age'].mask(self.test['Age'] > 120, "120")
+    def clean_age_col(self, replace_value, age_map):
         self.data['Age'] = self.data['Age'].astype(str)
         self.test['Age'] = self.test['Age'].astype(str)
-
+        self.data['Age'] = self.data['Age'].mask(self.data['Age'] < '0', replace_value)
+        self.test['Age'] = self.test['Age'].mask(self.test['Age'] < '0', replace_value)
+        #self.data['Age'] = self.data['Age'].mask(self.data['Age'] > 105, replace_value)
+        #self.test['Age'] = self.test['Age'].mask(self.test['Age'] > 105, replace_value)
+        self.data['Age'] = self.data['Age'].mask(self.data['Age'] < '19', age_map[0])
+        self.test['Age'] = self.test['Age'].mask(self.test['Age'] < '19', age_map[0])
+        self.data['Age'] = self.data['Age'].mask((self.data['Age'] > '18') & (self.data['Age'] < '35'), age_map[19])
+        self.test['Age'] = self.test['Age'].mask((self.test['Age'] > '18') & (self.test['Age'] < '35'), age_map[19])
+        self.data['Age'] = self.data['Age'].mask((self.data['Age'] > '34') & (self.data['Age'] < '60'), age_map[35])
+        self.test['Age'] = self.test['Age'].mask((self.test['Age'] > '34') & (self.test['Age'] < '60'), age_map[35])
+        self.data['Age'] = self.data['Age'].mask(self.data['Age'] > '59', age_map[60])
+        self.test['Age'] = self.test['Age'].mask(self.test['Age'] > '59', age_map[60])
+                                
 
     def clean_color_col(self, color_mappings, color_rp):
-        for color in color_mappings:
-            self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
-            self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace(color, color_mappings[color])
-
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].str.replace(" ","")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('AsAttached',"0")
@@ -112,7 +127,9 @@ class Preprocessor:
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('0',color_rp)
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0',color_rp)
 
-        
+        for color in color_mappings:
+            self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
+            self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace(color, color_mappings[color])
              
     def clean_carmake_col(self, replace_value):
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('.',np.nan)
@@ -140,20 +157,20 @@ class Preprocessor:
                 col_names = ['Below 18', '18-45', '45-60', 'Above or equal to 60']
                 data = {}
                 data[col_names[0]] = { 
-                    0: self.data[(self.data['Age'] < "18") & (self.data['target'] == 0)]['Age'].size,
-                    1: self.data[(self.data['Age'] < "18") & (self.data['target'] == 1)]['Age'].size
+                    0: self.data[(self.data['Age'] < 18) & (self.data['target'] == 0)]['Age'].size,
+                    1: self.data[(self.data['Age'] < 18) & (self.data['target'] == 1)]['Age'].size
                 }
                 data[col_names[1]] = {
-                    0: self.data[((self.data['Age'] > "17") & (self.data['Age'] < "45")) & (self.data['target'] == 0)]['Age'].size,
-                    1: self.data[((self.data['Age'] > "17") & (self.data['Age'] < "45")) & (self.data['target'] == 1)]['Age'].size
+                    0: self.data[((self.data['Age'] > 17) & (self.data['Age'] < 45)) & (self.data['target'] == 0)]['Age'].size,
+                    1: self.data[((self.data['Age'] > 17) & (self.data['Age'] < 45)) & (self.data['target'] == 1)]['Age'].size
                 }
                 data[col_names[2]] = {
-                    0: self.data[((self.data['Age'] > "44") & (self.data['Age'] < "60")) & (self.data['target'] == 0)]['Age'].size,
-                    1: self.data[((self.data['Age'] > "44") & (self.data['Age'] < "60")) & (self.data['target'] == 1)]['Age'].size
+                    0: self.data[((self.data['Age'] > 44) & (self.data['Age'] < 60)) & (self.data['target'] == 0)]['Age'].size,
+                    1: self.data[((self.data['Age'] > 44) & (self.data['Age'] < 60)) & (self.data['target'] == 1)]['Age'].size
                 }
                 data[col_names[3]] = {
-                    0: self.data[(self.data['Age'] > "59") & (self.data['target'] == 0)]['Age'].size,
-                    1: self.data[(self.data['Age'] > "59") & (self.data['target'] == 1)]['Age'].size
+                    0: self.data[(self.data['Age'] > 59) & (self.data['target'] == 0)]['Age'].size,
+                    1: self.data[(self.data['Age'] > 59) & (self.data['target'] == 1)]['Age'].size
                 }
                 data = pd.DataFrame(data=list(data.values()), index=col_names)
                 data.plot(kind="bar")
