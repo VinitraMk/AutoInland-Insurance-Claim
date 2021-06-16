@@ -9,6 +9,7 @@ from models.logistic import Logistic
 from models.knn import KNN
 from models.svm import SVM
 from models.rfa import RandomForest
+from models.xgb import XGB
 
 def run_model(args, X, y):
     model = None
@@ -24,6 +25,9 @@ def run_model(args, X, y):
     elif args['model'] == 'rfa':
         rfa = RandomForest(X, y, model)
         model = rfa.train_model()
+    elif args['model'] == 'xgb':
+        xgb = XGB(X, y, model)
+        model = xgb.train_model()
     else:
         print('\nInvalid model name :-|\n')
         exit()

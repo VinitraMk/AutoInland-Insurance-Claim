@@ -51,6 +51,12 @@ class Preprocessor:
         self.encode_labels()
         return self.apply_oversampling()
 
+    def correcting_states(self):
+        config = get_config_params()
+        state_data = pd.read_csv(config['state_mapping'])
+        unique_vals = self.data['State'].unique()
+        for val in unique_vals:
+            lga = state_data[state_data['State'] == val].iloc[0]['LGA']
 
     def find_missing_val_replacements(self):
         for col in self.data.columns:
@@ -77,14 +83,10 @@ class Preprocessor:
         print('Lengths of test, train, valid',self.test.shape, self.X.shape, self.valid_X.shape)
 
     def encode_labels(self):
-        selected_cols = [x for x in self.data.columns if x != 'target' and x not in self.preproc_args['skip']]
-        print(self.data.columns)
-        print(selected_cols)
-        print(self.data['Age_Cat'].head())
+        selected_cols = [x for x in self.data.columns if x != 'target' and x != 'Age' and x != 'No_Pol' and x not in self.preproc_args['skip']]
         le = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1, dtype=np.int64)
         self.data[selected_cols] = le.fit_transform(self.data[selected_cols])
         self.test[selected_cols] = le.transform(self.test[selected_cols])
-        print(self.data.columns)
         print(f'Encoded classes', le.categories_)
 
     def replace_cols(self, col, to_replace, value):
@@ -101,21 +103,22 @@ class Preprocessor:
         self.test['Gender'] = rpcol
 
     def clean_age_col(self, replace_value, age_map):
-        self.data['Age'] = self.data['Age'].astype(str)
-        self.test['Age'] = self.test['Age'].astype(str)
-        self.data['Age'] = self.data['Age'].mask(self.data['Age'] < '0', replace_value)
-        self.test['Age'] = self.test['Age'].mask(self.test['Age'] < '0', replace_value)
-        #self.data['Age'] = self.data['Age'].mask(self.data['Age'] > 105, replace_value)
-        #self.test['Age'] = self.test['Age'].mask(self.test['Age'] > 105, replace_value)
-        self.data['Age'] = self.data['Age'].mask(self.data['Age'] < '19', age_map[0])
-        self.test['Age'] = self.test['Age'].mask(self.test['Age'] < '19', age_map[0])
-        self.data['Age'] = self.data['Age'].mask((self.data['Age'] > '18') & (self.data['Age'] < '35'), age_map[19])
-        self.test['Age'] = self.test['Age'].mask((self.test['Age'] > '18') & (self.test['Age'] < '35'), age_map[19])
-        self.data['Age'] = self.data['Age'].mask((self.data['Age'] > '34') & (self.data['Age'] < '60'), age_map[35])
-        self.test['Age'] = self.test['Age'].mask((self.test['Age'] > '34') & (self.test['Age'] < '60'), age_map[35])
-        self.data['Age'] = self.data['Age'].mask(self.data['Age'] > '59', age_map[60])
-        self.test['Age'] = self.test['Age'].mask(self.test['Age'] > '59', age_map[60])
-                                
+        self.data['Age'] = self.data['Age'].apply(pd.to_numeric)
+        self.test['Age'] = self.test['Age'].apply(pd.to_numeric)
+        self.data['Age'] = self.data['Age'].mask(self.data['Age'] < 0, replace_value)
+        self.test['Age'] = self.test['Age'].mask(self.test['Age'] < 0, replace_value)
+        '''
+        self.data['Age_Cat'] = self.data['Age'].astype(str)
+        self.test['Age_Cat'] = self.test['Age'].astype(str)
+        self.data.loc[(self.data['Age'] < 19), 'Age_Cat'] = age_map[0]
+        self.test.loc[(self.test['Age'] < 19), 'Age_Cat'] = age_map[0]
+        self.data.loc[(self.data['Age'] > 18) & (self.data['Age'] < 35), 'Age_Cat'] = age_map[19]
+        self.test.loc[(self.test['Age'] > 18) & (self.test['Age'] < 35), 'Age_Cat'] = age_map[19]
+        self.data.loc[(self.data['Age'] > 34) & (self.data['Age'] < 60), 'Age_Cat'] = age_map[35]
+        self.test.loc[(self.test['Age'] > 34) & (self.test['Age'] < 60), 'Age_Cat'] = age_map[35]
+        self.data.loc[(self.data['Age'] > 59), 'Age_Cat'] = age_map[60]
+        self.test.loc[(self.test['Age'] > 59), 'Age_Cat'] = age_map[60]
+        '''
 
     def clean_color_col(self, color_mappings, color_rp):
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
@@ -126,7 +129,6 @@ class Preprocessor:
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].fillna("0")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('0',color_rp)
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('0',color_rp)
-
         for color in color_mappings:
             self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace(color, color_mappings[color])
             self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace(color, color_mappings[color])
@@ -154,19 +156,19 @@ class Preprocessor:
             if col in self.preproc_args['skip']:
                 pass
             elif col == 'Age':
-                col_names = ['Below 18', '18-45', '45-60', 'Above or equal to 60']
+                col_names = ['Below 18', '18-34', '35-59', 'Above or equal to 60']
                 data = {}
                 data[col_names[0]] = { 
                     0: self.data[(self.data['Age'] < 18) & (self.data['target'] == 0)]['Age'].size,
                     1: self.data[(self.data['Age'] < 18) & (self.data['target'] == 1)]['Age'].size
                 }
                 data[col_names[1]] = {
-                    0: self.data[((self.data['Age'] > 17) & (self.data['Age'] < 45)) & (self.data['target'] == 0)]['Age'].size,
-                    1: self.data[((self.data['Age'] > 17) & (self.data['Age'] < 45)) & (self.data['target'] == 1)]['Age'].size
+                    0: self.data[((self.data['Age'] > 17) & (self.data['Age'] < 34)) & (self.data['target'] == 0)]['Age'].size,
+                    1: self.data[((self.data['Age'] > 17) & (self.data['Age'] < 34)) & (self.data['target'] == 1)]['Age'].size
                 }
                 data[col_names[2]] = {
-                    0: self.data[((self.data['Age'] > 44) & (self.data['Age'] < 60)) & (self.data['target'] == 0)]['Age'].size,
-                    1: self.data[((self.data['Age'] > 44) & (self.data['Age'] < 60)) & (self.data['target'] == 1)]['Age'].size
+                    0: self.data[((self.data['Age'] > 34) & (self.data['Age'] < 60)) & (self.data['target'] == 0)]['Age'].size,
+                    1: self.data[((self.data['Age'] > 34) & (self.data['Age'] < 60)) & (self.data['target'] == 1)]['Age'].size
                 }
                 data[col_names[3]] = {
                     0: self.data[(self.data['Age'] > 59) & (self.data['target'] == 0)]['Age'].size,
