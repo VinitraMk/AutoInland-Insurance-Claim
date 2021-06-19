@@ -21,6 +21,7 @@ class XGB:
                 use_label_encoder = False,
                 learning_rate = params['learning_rate'],
                 n_estimators = params['n_estimators'],
-                num_class = 2)
+                num_class=2,
+                min_split_loss = params['min_split_loss'])
         self.model = self.model.fit(self.X, self.y)
         return self.model

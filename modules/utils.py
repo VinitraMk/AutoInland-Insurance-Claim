@@ -1,6 +1,7 @@
 from datetime import datetime
 from os import path, getenv
 import yaml
+import pandas as pd
 
 def get_filename(filename):
     now = datetime.now().strftime('%d%m%Y-%H%M%S')
@@ -31,4 +32,26 @@ def get_preproc_params():
 def get_validation_params():
     all_args = get_all_args()
     return all_args['validation']
+
+def break_date(date):
+    if date != '':
+        return (date.day, date.month, date.year)
+    return ('','','')
+
+def extract_date(datestring):
+    date = ''
+    try:
+        date = datetime.strptime(datestring,'%d-%m-%Y')
+    except ValueError:
+        try:
+            date = datetime.strptime(datestring, '%Y-%m-%d')
+        except ValueError:
+            try:
+                date = datetime.strptime(datestring,'%m-%d-%Y')
+            except ValueError:
+                return ''
+    return date
+
+def is_null(value):
+    return pd.isnull(value) or pd.isna(value)
 
