@@ -21,9 +21,14 @@ def get_config():
     all_args = get_all_args()
     return all_args['config']
 
-def get_model_params():
-    all_args = get_all_args()
-    return all_args['args']
+def get_model_params(ensemble = False, model_name = ''):
+    if not(ensemble):
+        all_args = get_all_args()
+        return all_args['args']
+    else:
+        all_args = get_all_args()
+        model_args = all_args['args']['ensembler_args'][model_name]
+        return model_args
 
 def get_preproc_params():
     all_args = get_all_args()

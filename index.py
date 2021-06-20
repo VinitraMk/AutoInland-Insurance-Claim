@@ -1,5 +1,8 @@
 import yaml
 import os
+from sklearn.metrics import f1_score
+from sklearn.ensemble import VotingClassifier
+import copy
 
 from modules.utils import get_config_path, get_model_params, get_preproc_params, get_validation_params
 from modules.experiment import Experiment
@@ -11,8 +14,9 @@ from models.svm import SVM
 from models.rfa import RandomForest
 from models.xgb import XGB
 from models.lgbm import LightGBM
+from models.catboost import CatBoost
 
-def run_model(args, X, y):
+def run_model(args, X, y, ensembler = False):
     model = None
     if args['model'] == 'logistic':
         logistic = Logistic(X,y, model)
@@ -31,7 +35,21 @@ def run_model(args, X, y):
         model = xgb.train_model()
     elif args['model'] == 'lgbm':
         lgbm = LightGBM(X, y, model)
-        model = lgbm.train_model()
+        model = lgbm.train_model(ensembler)
+    elif args['model'] == 'catboost':
+        catboost = CatBoost(X, y, model)
+        model = catboost.train_model(ensembler)
+    elif len(args['models']) > 1:
+        models = [('', None)]* len(args['models'])
+        for i in range(len(args['models'])):
+            model_name = args['models'][i]
+            temp_args = copy.deepcopy(args)
+            temp_args['model'] = model_name 
+            models[i] = (model_name, run_model(temp_args, X, y, True))
+
+        model = VotingClassifier(estimators=models, voting='hard')
+        model.fit(X, y)
+        return model
     else:
         print('\nInvalid model name :-|\n')
         exit()

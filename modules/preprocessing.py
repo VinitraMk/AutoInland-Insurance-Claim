@@ -7,6 +7,7 @@ import numpy as np
 from os import path, getenv
 import matplotlib.pyplot as plt
 import math
+import re
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.over_sampling import RandomOverSampler, SMOTE
@@ -25,6 +26,7 @@ class Preprocessor:
     preproc_args = None
     missing_val_maps = dict()
     state_map = None
+    selected_cols = []
 
     def __init__(self):
         self.config = get_config()
@@ -49,6 +51,7 @@ class Preprocessor:
         self.clean_color_col(self.preproc_args['missing']['color'])
         self.clean_carmake_col(self.preproc_args['missing']['make'])
         self.clean_carcat_col(self.preproc_args['missing']['category'])
+        self.clean_car_product(self.preproc_args['missing']['product'])
         #self.clean_state_col(self.preproc_args['missing']['state'])
         #self.clean_LGA_col(self.preproc_args['missing']['lga'])
         self.clean_date_col()
@@ -73,9 +76,8 @@ class Preprocessor:
                 k_neighbors = self.preproc_args['over_sampling_k'],
                 n_jobs=-1)
         under_sampler = OneSidedSelection(sampling_strategy = 'majority', random_state=42, n_neighbors = 5, n_jobs = -1)
-        X = self.data
+        X = self.data.drop(columns = ['target'])
         y = self.data['target']
-        X = X.drop(columns=['target'])
         #X, y = under_sampler.fit_resample(X, y)
         #print('Data shape after under sampling', X.shape)
         #print('Class shapes after sampling', self.data[self.data['target'] == 0].shape, self.data[self.data['target'] == 1].shape)
@@ -84,16 +86,19 @@ class Preprocessor:
         self.data = X.join(y)
         print('\nData shape after sampling', self.data.shape)
         print('Test Data shape', self.test.shape,'\n')
+        self.data = self.data.rename(columns = lambda x: re.sub('[^A-Za-z0-9_]+','',x))
+        self.test = self.test.rename(columns = lambda x: re.sub('[^A-Za-z0-9_]+','',x))
         return self.data, self.test, self.test_ids
 
     def encode_labels(self):
         date_cols = ['Policy_Start_Day', 'Policy_Start_Month', 'Policy_Start_Year', 'Policy_End_Day', 'Policy_End_Month', 'Policy_End_Year', 'Transaction_Day', 'Transaction_Month', 'Transaction_Year']
-        selected_cols = [x for x in self.data.columns if x != 'target' and x not in self.preproc_args['skip'] and x not in date_cols]
+        other_cols = ['No_Pol', 'Age', 'target', 'ID']
+        selected_cols = [x for x in self.data.columns if x not in other_cols and x not in self.preproc_args['skip'] and x not in date_cols]
         train_len = self.data.shape[0]
         X = self.data.drop(columns = ['target'])
         y = self.data['target']
         all_data = pd.concat([X, self.test]).reset_index(drop = True)
-        all_data = pd.get_dummies(data = all_data)
+        all_data = pd.get_dummies(data = all_data, columns = selected_cols)
         self.data = all_data[:train_len]
         self.data = self.data.join(y)
         self.test = all_data[train_len:]
@@ -136,6 +141,10 @@ class Preprocessor:
     def clean_color_col(self, color_rp):
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].str.replace(" ","")
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(".","")
+        self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].str.replace(".","")
+        self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace("&","")
+        self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].str.replace("&","")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].replace('AsAttached',"0")
         self.test['Subject_Car_Colour'] = self.test['Subject_Car_Colour'].replace('AsAttached',"0")
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].fillna("0")
@@ -146,12 +155,30 @@ class Preprocessor:
     def clean_carmake_col(self, replace_value):
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('.',np.nan)
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].replace('.',np.nan)
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('As Attached',np.nan)
+        self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].replace('As Attached',np.nan)
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].replace('Land Rover.','Land Rover')
+        self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].replace('Land Rover.','Land Rover')
         self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].fillna(replace_value)
         self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].fillna(replace_value)
+        self.data['Subject_Car_Make'] = self.data['Subject_Car_Make'].apply(lambda x: x.title().replace(" ",""))
+        self.test['Subject_Car_Make'] = self.test['Subject_Car_Make'].apply(lambda x: x.title().replace(" ",""))
 
     def clean_carcat_col(self, replace_value):
         self.data['Car_Category'] = self.data['Car_Category'].fillna(replace_value)
         self.test['Car_Category'] = self.test['Car_Category'].fillna(replace_value)
+        self.data['Car_Category'] = self.data['Car_Category'].replace('Pick Up > 3 Tons','Pick Up Gt Than Three Tons')
+        self.test['Car_Category'] = self.test['Car_Category'].replace('Pick Up > 3 Tons','Pick Up Gt Than Three Tons')
+        self.data['Car_Category'] = self.data['Car_Category'].fillna(replace_value)
+        self.test['Car_Category'] = self.test['Car_Category'].fillna(replace_value)
+        self.data['Car_Category'] = self.data['Car_Category'].apply(lambda x: x.title().replace(" ",""))
+        self.test['Car_Category'] = self.test['Car_Category'].apply(lambda x: x.title().replace(" ",""))
+
+    def clean_car_product(self, replace_value):
+        self.data['ProductName'] = self.data['ProductName'].fillna(replace_value)
+        self.test['ProductName'] = self.test['ProductName'].fillna(replace_value)
+        self.data['ProductName'] = self.data['ProductName'].apply(lambda x: x.title().replace(" ",""))
+        self.test['ProductName'] = self.test['ProductName'].apply(lambda x: x.title().replace(" ",""))
 
     def clean_date_col(self):
         st_day = self.preproc_args['missing']['policy_start_day']
@@ -217,6 +244,15 @@ class Preprocessor:
             row['LGA_Name'] = self.state_map[self.state_map['State'] == row['State']].iloc[0]['LGA']
         return row
 
+    def clean_special_chars(self, row):
+        temp_val = row['LGA_Name']
+        temp_val = re.sub(r'[-/_]+',' ', temp_val)
+        row['LGA_Name'] = temp_val.title().replace(' ','')
+        temp_val = row['State']
+        temp_val = re.sub(r'[-/_]+',' ', temp_val)
+        row['State'] = temp_val.title().replace(' ','')
+        return row
+
     def remake_states_lga(self):
         self.data['State'] = self.data['State'].replace('N-A',np.NaN)
         self.data['LGA_Name'] = self.data['LGA_Name'].replace('LGA',np.NaN)
@@ -224,6 +260,8 @@ class Preprocessor:
         self.test['LGA_Name'] = self.test['LGA_Name'].replace('LGA',np.NaN)
         self.data = self.data.apply(self.get_state_mapping, axis = 1)
         self.test = self.test.apply(self.get_state_mapping, axis = 1)
+        self.data = self.data.apply(self.clean_special_chars, axis = 1)
+        self.test = self.test.apply(self.clean_special_chars, axis = 1)
 
     def remake_nopol_col(self):
         self.data['No_Pol'] = self.data['No_Pol'].astype(str)
