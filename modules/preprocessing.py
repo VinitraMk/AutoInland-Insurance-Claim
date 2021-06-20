@@ -10,6 +10,7 @@ import math
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from imblearn.over_sampling import RandomOverSampler, SMOTE
+from imblearn.under_sampling import NearMiss, TomekLinks, OneSidedSelection
 from sklearn.decomposition import PCA
 from datetime import datetime
 
@@ -40,17 +41,20 @@ class Preprocessor:
 
     def start_preprocessing(self):
         print('\nCleaning up columns...')
-        self.plot_graph()
         self.remake_date_cols()
         self.remake_states_lga()
         self.find_missing_val_replacements()
         self.clean_gender_col(self.preproc_args['missing']['gender'])
-        self.clean_age_col(int(self.preproc_args['missing']['age']))
+        self.clean_age_col(int(self.preproc_args['missing']['age']), self.preproc_args['missing']['age_map'])
         self.clean_color_col(self.preproc_args['missing']['color'])
         self.clean_carmake_col(self.preproc_args['missing']['make'])
         self.clean_carcat_col(self.preproc_args['missing']['category'])
+        #self.clean_state_col(self.preproc_args['missing']['state'])
+        #self.clean_LGA_col(self.preproc_args['missing']['lga'])
         self.clean_date_col()
+        #self.remake_nopol_col()
         print('\nPlotting distribution...')
+        self.plot_graph()
         self.drop_skip_columns()
         print('\nApplying label encoder...')
         self.encode_labels()
@@ -65,13 +69,18 @@ class Preprocessor:
         print('Missing value modes', self.missing_val_maps)
 
     def apply_oversampling(self):
-        over_sampler = SMOTE(sampling_strategy=self.preproc_args['sampling_strategy'], random_state = 42,
-                k_neighbors = self.preproc_args['sampling_k'],
+        over_sampler = SMOTE(sampling_strategy=self.preproc_args['over_sampling_strategy'], random_state = 42,
+                k_neighbors = self.preproc_args['over_sampling_k'],
                 n_jobs=-1)
+        under_sampler = OneSidedSelection(sampling_strategy = 'majority', random_state=42, n_neighbors = 5, n_jobs = -1)
         X = self.data
         y = self.data['target']
         X = X.drop(columns=['target'])
+        #X, y = under_sampler.fit_resample(X, y)
+        #print('Data shape after under sampling', X.shape)
+        #print('Class shapes after sampling', self.data[self.data['target'] == 0].shape, self.data[self.data['target'] == 1].shape)
         X, y = over_sampler.fit_resample(X, y)
+        #print('Data shape after over sampling', X.shape)
         self.data = X.join(y)
         print('\nData shape after sampling', self.data.shape)
         print('Test Data shape', self.test.shape,'\n')
@@ -79,7 +88,7 @@ class Preprocessor:
 
     def encode_labels(self):
         date_cols = ['Policy_Start_Day', 'Policy_Start_Month', 'Policy_Start_Year', 'Policy_End_Day', 'Policy_End_Month', 'Policy_End_Year', 'Transaction_Day', 'Transaction_Month', 'Transaction_Year']
-        selected_cols = [x for x in self.data.columns if x != 'target' and x != 'Age' and x != 'No_Pol' and x not in self.preproc_args['skip'] and x not in date_cols]
+        selected_cols = [x for x in self.data.columns if x != 'target' and x not in self.preproc_args['skip'] and x not in date_cols]
         train_len = self.data.shape[0]
         X = self.data.drop(columns = ['target'])
         y = self.data['target']
@@ -88,7 +97,7 @@ class Preprocessor:
         self.data = all_data[:train_len]
         self.data = self.data.join(y)
         self.test = all_data[train_len:]
-        print(f'\nEncoded columns: {selected_cols}\n')
+        print(f'\nSelected columns: {selected_cols}\n')
 
     def replace_cols(self, col, to_replace, value):
         for val in to_replace:
@@ -103,13 +112,26 @@ class Preprocessor:
         self.data['Gender'] = rpcol
         self.test['Gender'] = rpcol
 
-    def clean_age_col(self, replace_value):
+    def clean_age_col(self, replace_value, age_map):
         self.data['Age'] = self.data['Age'].apply(pd.to_numeric)
         self.test['Age'] = self.test['Age'].apply(pd.to_numeric)
         self.data['Age'] = self.data['Age'].mask(self.data['Age'] < 0, replace_value)
         self.test['Age'] = self.test['Age'].mask(self.test['Age'] < 0, replace_value)
         self.data['Age'] = self.data['Age'].mask(self.data['Age'] > 105, replace_value)
         self.test['Age'] = self.test['Age'].mask(self.test['Age'] > 105, replace_value)
+        
+        '''
+        self.data['Age_Cat'] = self.data['Age'].astype(str)
+        self.test['Age_Cat'] = self.test['Age'].astype(str)
+        self.data.loc[(self.data['Age'] < 19), 'Age_Cat'] = age_map[0]
+        self.test.loc[(self.test['Age'] < 19), 'Age_Cat'] = age_map[0]
+        self.data.loc[(self.data['Age'] > 18) & (self.data['Age'] < 35), 'Age_Cat'] = age_map[19]
+        self.test.loc[(self.test['Age'] > 18) & (self.test['Age'] < 35), 'Age_Cat'] = age_map[19]
+        self.data.loc[(self.data['Age'] > 34) & (self.data['Age'] < 60), 'Age_Cat'] = age_map[35]
+        self.test.loc[(self.test['Age'] > 34) & (self.test['Age'] < 60), 'Age_Cat'] = age_map[35]
+        self.data.loc[(self.data['Age'] > 59), 'Age_Cat'] = age_map[60]
+        self.test.loc[(self.test['Age'] > 59), 'Age_Cat'] = age_map[60]
+        '''
 
     def clean_color_col(self, color_rp):
         self.data['Subject_Car_Colour'] = self.data['Subject_Car_Colour'].str.replace(" ","")
@@ -203,6 +225,10 @@ class Preprocessor:
         self.data = self.data.apply(self.get_state_mapping, axis = 1)
         self.test = self.test.apply(self.get_state_mapping, axis = 1)
 
+    def remake_nopol_col(self):
+        self.data['No_Pol'] = self.data['No_Pol'].astype(str)
+        self.test['No_Pol'] = self.test['No_Pol'].astype(str)
+
     def plot_graph(self):
         for col in self.data.columns:
             if col in self.preproc_args['skip']:
@@ -258,4 +284,14 @@ class Preprocessor:
                 plt.tight_layout()
                 plt.savefig(f'{plot_path}/{col}_distribution.png')
                 plt.clf()
+
+    # Legacy Methods
+
+    def clean_LGA_col(self, replace_value):
+        self.data['LGA_Name'] = self.data['LGA_Name'].fillna(replace_value)
+        self.test['LGA_Name'] = self.test['LGA_Name'].fillna(replace_value)
+
+    def clean_state_col(self, replace_value):
+        self.data['State'] = self.data['State'].fillna(replace_value)
+        self.test['State'] = self.test['State'].fillna(replace_value)
 

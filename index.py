@@ -10,6 +10,7 @@ from models.knn import KNN
 from models.svm import SVM
 from models.rfa import RandomForest
 from models.xgb import XGB
+from models.lgbm import LightGBM
 
 def run_model(args, X, y):
     model = None
@@ -28,6 +29,9 @@ def run_model(args, X, y):
     elif args['model'] == 'xgb':
         xgb = XGB(X, y, model)
         model = xgb.train_model()
+    elif args['model'] == 'lgbm':
+        lgbm = LightGBM(X, y, model)
+        model = lgbm.train_model()
     else:
         print('\nInvalid model name :-|\n')
         exit()

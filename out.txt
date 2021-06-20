@@ -1,0 +1,144 @@
+
+Cleaning up columns...
+Missing value modes {'Policy Start Date': 0    27-03-2010
+dtype: object, 'Policy End Date': 0    31-12-2010
+dtype: object, 'Gender': 0    Male
+dtype: object, 'Age': 0    40
+dtype: int64, 'First Transaction Date': 0    27-03-2010
+dtype: object, 'No_Pol': 0    1
+dtype: int64, 'Car_Category': 0    Saloon
+dtype: object, 'Subject_Car_Colour': 0    Black
+dtype: object, 'Subject_Car_Make': 0    TOYOTA
+dtype: object, 'LGA_Name': 0    Agege
+dtype: object, 'State': 0    Lagos
+dtype: object, 'ProductName': 0    Car Classic
+dtype: object, 'target': 0    0
+dtype: int64, 'Policy_Start_Day': 0    28
+dtype: int64, 'Policy_Start_Month': 0    1
+dtype: int64, 'Policy_Start_Year': 0    2010
+dtype: int64, 'Policy_End_Day': 0    27
+dtype: int64, 'Policy_End_Month': 0    1
+dtype: int64, 'Policy_End_Year': 0    2011
+dtype: int64, 'Transaction_Day': 0    28
+dtype: int64, 'Transaction_Month': 0    1
+dtype: int64, 'Transaction_Year': 0    2010
+dtype: int64}
+
+Plotting distribution...
+
+Applying label encoder...
+
+Selected columns: ['Gender', 'Age', 'No_Pol', 'Car_Category', 'Subject_Car_Colour', 'Subject_Car_Make', 'LGA_Name', 'State', 'ProductName']
+
+
+Data shape after sampling (13653, 535)
+Test Data shape (1202, 534) 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9137480397281755
+
+Confusion matrix:
+ [[326  86]
+ [ 79 874]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9247094492167762
+
+Confusion matrix:
+ [[301  81]
+ [ 68 915]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.916069600818833
+
+Confusion matrix:
+ [[306  96]
+ [ 68 895]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.901656314699793
+
+Confusion matrix:
+ [[304 113]
+ [ 77 871]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9137670196671709
+
+Confusion matrix:
+ [[288 100]
+ [ 71 906]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9116424116424118
+
+Confusion matrix:
+ [[318  87]
+ [ 83 877]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9093766369827135
+
+Confusion matrix:
+ [[324 105]
+ [ 68 868]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9076142131979696
+
+Confusion matrix:
+ [[289  92]
+ [ 90 894]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'depthwise'}
+
+Validation set accuracy score:  0.9142857142857141
+
+Confusion matrix:
+ [[320 101]
+ [ 64 880]] 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'lossguide', 'nthread': 5, 'max_depth': 0}
+
+Validation set accuracy score:  0.9066802651708312
+
+Confusion matrix:
+ [[293 106]
+ [ 77 889]] 
+
+
+Average F1 score of the model: 0.9119549665410389 
+
+
+Starting experiment...
+Model params: {'model': 'xgb', 'n_estimators': 1000, 'learning_rate': 0.1, 'min_split_loss': 0.3, 'class_weight': 'balanced', 'tree_method': 'hist', 'single_precision_histogram': False, 'grow_policy': 'lossguide', 'nthread': 5, 'max_depth': 30}
+Saving predictions to xgb_20062021-100737.csv...
+
