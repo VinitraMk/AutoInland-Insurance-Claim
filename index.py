@@ -8,6 +8,7 @@ from modules.utils import get_config_path, get_model_params, get_preproc_params,
 from modules.experiment import Experiment
 from modules.preprocessing import Preprocessor
 from modules.validation import Validate
+from modules.ensembler import Ensembler
 from models.logistic import Logistic
 from models.knn import KNN
 from models.svm import SVM
@@ -47,8 +48,8 @@ def run_model(args, X, y, ensembler = False):
             temp_args['model'] = model_name 
             models[i] = (model_name, run_model(temp_args, X, y, True))
 
-        model = VotingClassifier(estimators=models, voting='hard')
-        model.fit(X, y)
+        ensembler = Ensembler(X, y, model, args['ensembler_type'])
+        model = ensembler.train_model(models)
         return model
     else:
         print('\nInvalid model name :-|\n')
