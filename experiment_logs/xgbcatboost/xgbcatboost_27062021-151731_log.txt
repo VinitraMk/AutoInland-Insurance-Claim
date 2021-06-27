@@ -1,0 +1,90 @@
+{
+    "model_args": {
+        "model": "xgbcatboost",
+        "feature_k": 10,
+        "models": [
+            "xgb",
+            "catboost"
+        ],
+        "ensembler_type": "voting",
+        "voting_type": "hard",
+        "ensembler_args": {
+            "rfa": {
+                "class_weight": "balanced",
+                "n_estimators": 300,
+                "max_depth": 70,
+                "criterion": "gini",
+                "max_features": "log2"
+            },
+            "catboost": {
+                "iterations": 220,
+                "learning_rate": 0.95,
+                "l2_leaf_reg": 5,
+                "depth": 10
+            },
+            "lgbm": {
+                "n_estimators": 1000,
+                "learning_rate": 0.5,
+                "min_split_loss": 0.0,
+                "class_weight": "balanced",
+                "num_leaves": 128,
+                "min_child_samples": 14,
+                "min_child_weight": 10
+            },
+            "xgb": {
+                "n_estimators": 1000,
+                "learning_rate": 0.1,
+                "min_split_loss": 0.3,
+                "class_weight": "balanced",
+                "tree_method": "hist",
+                "single_precision_histogram": false,
+                "grow_policy": "lossguide",
+                "nthread": 5
+            }
+        }
+    },
+    "model_output": {
+        "validation_score": 0.9133558853445003
+    },
+    "preproc_args": {
+        "skip": [
+            "ID",
+            "Policy Start Date",
+            "Policy End Date",
+            "First Transaction Date",
+            "Transaction_Day",
+            "Transaction_Month",
+            "Transaction_Year"
+        ],
+        "over_sampling_strategy": 1.0,
+        "over_sampling_k": 5,
+        "select_kbest": true,
+        "correlation_LB": 0.07,
+        "correlation_UB": -0.05,
+        "missing": {
+            "gender": "Male",
+            "age": 40,
+            "color": "Black",
+            "category": "Saloon",
+            "make": "TOYOTA",
+            "state": "Lagos",
+            "lga": "Victoria Island",
+            "product": "Car Classic",
+            "policy_start_day": 28,
+            "policy_start_month": 1,
+            "policy_start_year": 2010,
+            "policy_end_day": 27,
+            "policy_end_month": 1,
+            "policy_end_year": 2011,
+            "transaction_day": 28,
+            "transaction_month": 1,
+            "transaction_year": 2010,
+            "age_map": {
+                "0": "CHILD",
+                "19": "ADULT",
+                "35": "MID_ADULT",
+                "60": "SENIOR"
+            }
+        }
+    }
+}

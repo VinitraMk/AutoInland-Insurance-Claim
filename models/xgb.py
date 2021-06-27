@@ -13,8 +13,12 @@ class XGB:
         self.y = y
         self.model = model
 
-    def train_model(self):
-        params = get_model_params()
+    def train_model(self, ensembler = False):
+        params = {}
+        if ensembler:
+            params = get_model_params(ensembler, 'xgb')
+        else:
+            params = get_model_params()
         self.model = XGBClassifier(random_state = 42,
                 objective = 'multi:softmax',
                 eval_metric = 'merror',

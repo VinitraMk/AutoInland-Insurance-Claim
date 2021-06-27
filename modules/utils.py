@@ -60,3 +60,7 @@ def extract_date(datestring):
 def is_null(value):
     return pd.isnull(value) or pd.isna(value)
 
+def save_fig(file_name, plt):
+    config = get_all_args()['config']
+    plt.savefig(f'{config["visualizations"]}/{file_name}.png')
+

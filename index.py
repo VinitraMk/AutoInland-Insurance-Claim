@@ -3,6 +3,7 @@ import os
 from sklearn.metrics import f1_score
 from sklearn.ensemble import VotingClassifier
 import copy
+import sys
 
 from modules.utils import get_config_path, get_model_params, get_preproc_params, get_validation_params
 from modules.experiment import Experiment
@@ -30,10 +31,10 @@ def run_model(args, X, y, ensembler = False):
         model = svm.train_model()
     elif args['model'] == 'rfa':
         rfa = RandomForest(X, y, model)
-        model = rfa.train_model()
+        model = rfa.train_model(ensembler)
     elif args['model'] == 'xgb':
         xgb = XGB(X, y, model)
-        model = xgb.train_model()
+        model = xgb.train_model(ensembler)
     elif args['model'] == 'lgbm':
         lgbm = LightGBM(X, y, model)
         model = lgbm.train_model(ensembler)
@@ -74,10 +75,19 @@ def main(args, val_args):
         avg_score = score + avg_score
     avg_score = avg_score / val_args['k']
     print('\nAverage F1 score of the model:',avg_score,'\n')
-    X, y = validate.prepare_full_dataset()
-    model = run_model(args, X, y)
-    experiment = Experiment(get_config_path(), model)
-    experiment.predict_and_save_csv(test_features, test_ids, avg_score)
+    if not(val_args['split_data_for_training']):
+        X, y = validate.prepare_full_dataset()
+        model = run_model(args, X, y)
+        experiment = Experiment(get_config_path(), model)
+        experiment.predict_and_save_csv(test_features, test_ids, avg_score)
+    else:
+        X, y, valid_X, valid_y = validate.prepare_full_dataset()
+        model = run_model(args, X, y)
+        y_preds = model.predict(valid_X)
+        final_val_score = f1_score(valid_y, y_preds)
+        print('\nFinal validation set F1 score:',final_val_score,'\n')
+        experiment = Experiment(get_config_path(), model)
+        experiment.predict_and_save_csv(test_features, test_ids, avg_score, final_val_score)
 
 def read_args():
     args = get_model_params()

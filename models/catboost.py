@@ -24,9 +24,6 @@ class CatBoost:
                 depth = params['depth'],
                 l2_leaf_reg = params['l2_leaf_reg'],
                 od_type = "Iter",
-                grow_policy = params['grow_policy'],
-                max_leaves = params['max_leaves'],
-                min_data_in_leaf = params['min_data_in_leaf'],
                 verbose = 0
                 )
         if not(ensembler):

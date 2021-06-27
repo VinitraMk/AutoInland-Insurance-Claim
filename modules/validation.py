@@ -28,10 +28,14 @@ class Validate:
         return self.train_X, self.train_y, self.val_X, self.val_y
 
     def prepare_full_dataset(self):
-        X = self.data.drop(columns=['target'])
-        y = self.data['target']
-        #self.train_X, self.valid_X, self.train_y, self.valid_y = train_test_split(X,y,test_size = 0.3, random_state = 42)
-        #return self.train_X, self.train_y, self.valid_X, self.valid_y
-        return X, y
+        params = get_validation_params()
+        self.train_X = self.data.drop(columns=['target'])
+        self.train_y = self.data['target']
+        if not(params['split_data_for_training']):
+            return self.train_X, self.train_y
+        else:
+            self.train_X, self.valid_X, self.train_y, self.valid_y = train_test_split(self.train_X,self.train_y,
+                    test_size = params['data_split']['validate'], random_state = 42)
+            return self.train_X, self.train_y, self.valid_X, self.valid_y
 
 

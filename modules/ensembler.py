@@ -1,5 +1,7 @@
 from sklearn.ensemble import VotingClassifier
 
+from modules.utils import get_model_params
+
 class Ensembler:
     ensembler_type = ''
     X = None
@@ -21,7 +23,8 @@ class Ensembler:
             exit()
 
     def setup_voting_classifier(self, models):
-        model = VotingClassifier(estimators=models, voting='hard')
+        params = get_model_params()
+        model = VotingClassifier(estimators=models, voting=params['voting_type'])
         model.fit(self.X, self.y)
         return model
 

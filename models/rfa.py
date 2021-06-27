@@ -10,8 +10,12 @@ class RandomForest:
         self.X = X
         self.y = y
 
-    def train_model(self):
-        params = get_model_params()
+    def train_model(self, ensembler):
+        params = {}
+        if ensembler:
+            params = get_model_params(ensembler, 'rfa')
+        else:
+            params = get_model_params()
         self.model = RandomForestClassifier(
                 n_estimators = params['n_estimators'],
                 criterion = params['criterion'],
